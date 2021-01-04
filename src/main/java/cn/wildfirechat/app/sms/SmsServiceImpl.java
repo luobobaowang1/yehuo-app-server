@@ -1,6 +1,9 @@
 package cn.wildfirechat.app.sms;
 
 import cn.wildfirechat.app.RestResult;
+import cn.wildfirechat.app.sms.request.SmsSendRequest;
+import cn.wildfirechat.app.sms.response.SmsSendResponse;
+import com.alibaba.fastjson.JSON;
 import com.aliyuncs.CommonRequest;
 import com.aliyuncs.CommonResponse;
 import com.aliyuncs.DefaultAcsClient;
@@ -22,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 @Service
 public class SmsServiceImpl implements SmsService {
@@ -73,19 +77,38 @@ public class SmsServiceImpl implements SmsService {
         return RestResult.RestCode.ERROR_SERVER_ERROR;
     }
 
-    static OkHttpClient okHttpClient = new OkHttpClient();
-
-    private RestResult.RestCode sendAliyunCode(String mobile, String code) {
+    private RestResult.RestCode sendAliyunCode(String phone, String code) {
         try {
-            String url = String.format("http://47.101.58.161:18002/send.do?uid=26455&pw=175194&mb=%s&ms=【YL】您的验证码：%s，10分钟内有效，请勿向任何人泄漏。&ex=77", mobile, code);
-            String result = okHttpClient.newCall(
-                    new Request.Builder().url(url).get().build()
-            ).execute().body().string();
-            System.out.println("send sms code result :" + result);
+            //请求地址请登录253云通讯自助通平台查看或者询问您的商务负责人获取
+            String smsSingleRequestServerUrl = "https://sms.253.com/msg/send/json";
+            //短信内容
+            String msg = "【来思齐】您的验证为 " + code;
+            //状态报告
+            String report = "true";
+
+            SmsSendRequest smsSingleRequest = new SmsSendRequest(account, password, msg, phone, report);
+
+            String requestJson = JSON.toJSONString(smsSingleRequest);
+
+            System.out.println("before request string is: " + requestJson);
+
+            String response = ChuangLanSmsUtil.sendSmsByPost(smsSingleRequestServerUrl, requestJson);
+
+            System.out.println("response after request result is :" + response);
+
+            SmsSendResponse smsSingleResponse = JSON.parseObject(response, SmsSendResponse.class);
+
+            System.out.println("response  toString is :" + smsSingleResponse);
             return RestResult.RestCode.SUCCESS;
         } catch (Exception e) {
             return RestResult.RestCode.ERROR_SERVER_ERROR;
         }
     }
+
+
+    // 用户平台API账号(非登录账号,示例:N1234567)
+    public static String account = "YZM3653665";
+    // 用户平台API密码(非登录密码)
+    public static String password = "qdcQJmeVvKb9de";
 
 }
