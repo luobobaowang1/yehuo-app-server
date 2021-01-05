@@ -1,9 +1,6 @@
 package cn.wildfirechat.app.sms;
 
 import cn.wildfirechat.app.RestResult;
-import cn.wildfirechat.app.sms.request.SmsSendRequest;
-import cn.wildfirechat.app.sms.response.SmsSendResponse;
-import com.alibaba.fastjson.JSON;
 import com.aliyuncs.CommonRequest;
 import com.aliyuncs.CommonResponse;
 import com.aliyuncs.DefaultAcsClient;
@@ -16,6 +13,7 @@ import com.github.qcloudsms.SmsSingleSender;
 import com.github.qcloudsms.SmsSingleSenderResult;
 import com.github.qcloudsms.httpclient.HTTPException;
 import com.google.gson.Gson;
+import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import org.slf4j.Logger;
@@ -25,7 +23,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 
 @Service
 public class SmsServiceImpl implements SmsService {
@@ -77,38 +74,29 @@ public class SmsServiceImpl implements SmsService {
         return RestResult.RestCode.ERROR_SERVER_ERROR;
     }
 
-    private RestResult.RestCode sendAliyunCode(String phone, String code) {
+    static OkHttpClient okHttpClient = new OkHttpClient();
+
+    private RestResult.RestCode sendAliyunCode(String mobile, String code) {
+
+        String content = String.format("【冉静网络】您的验证码是：%s。", code);
+
+        FormBody formBody = new FormBody
+                .Builder()
+                .add("appid", "59717")//设置参数名称和参数值
+                .add("content", content)
+                .add("to", mobile)
+                .add("signature", "e5c49e43cb8fc94e72ca53b3528499da")
+                .build();
         try {
-            //请求地址请登录253云通讯自助通平台查看或者询问您的商务负责人获取
-            String smsSingleRequestServerUrl = "https://sms.253.com/msg/send/json";
-            //短信内容
-            String msg = "【来思齐】您的验证为 " + code;
-            //状态报告
-            String report = "true";
-
-            SmsSendRequest smsSingleRequest = new SmsSendRequest(account, password, msg, phone, report);
-
-            String requestJson = JSON.toJSONString(smsSingleRequest);
-
-            System.out.println("before request string is: " + requestJson);
-
-            String response = ChuangLanSmsUtil.sendSmsByPost(smsSingleRequestServerUrl, requestJson);
-
-            System.out.println("response after request result is :" + response);
-
-            SmsSendResponse smsSingleResponse = JSON.parseObject(response, SmsSendResponse.class);
-
-            System.out.println("response  toString is :" + smsSingleResponse);
+            String url = "https://api.mysubmail.com/message/send.json";
+            String result = okHttpClient.newCall(
+                    new Request.Builder().url(url).post(formBody).build()
+            ).execute().body().string();
+            System.out.println("send sms code result :" + result);
             return RestResult.RestCode.SUCCESS;
         } catch (Exception e) {
             return RestResult.RestCode.ERROR_SERVER_ERROR;
         }
     }
-
-
-    // 用户平台API账号(非登录账号,示例:N1234567)
-    public static String account = "YZM3653665";
-    // 用户平台API密码(非登录密码)
-    public static String password = "qdcQJmeVvKb9de";
 
 }
