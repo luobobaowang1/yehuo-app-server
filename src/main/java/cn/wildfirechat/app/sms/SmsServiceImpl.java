@@ -9,6 +9,13 @@ import com.aliyuncs.exceptions.ClientException;
 import com.aliyuncs.exceptions.ServerException;
 import com.aliyuncs.http.MethodType;
 import com.aliyuncs.profile.DefaultProfile;
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.services.sns.AmazonSNSClient;
+import com.amazonaws.services.sns.AmazonSNSClientBuilder;
+import com.amazonaws.services.sns.model.MessageAttributeValue;
+import com.amazonaws.services.sns.model.PublishRequest;
+import com.amazonaws.services.sns.model.PublishResult;
 import com.github.qcloudsms.SmsSingleSender;
 import com.github.qcloudsms.SmsSingleSenderResult;
 import com.github.qcloudsms.httpclient.HTTPException;
@@ -23,6 +30,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class SmsServiceImpl implements SmsService {
@@ -48,7 +57,15 @@ public class SmsServiceImpl implements SmsService {
         if (smsVerdor == 1) {
             return sendTencentCode(mobile, code);
         } else if (smsVerdor == 2) {
-            return sendAliyunCode(mobile, code);
+            System.out.println("send sms code mobile:"+ mobile);
+            String[] ms = mobile.split(" ");
+            if (ms.length == 1) {
+                return sendAliyunCode(mobile, code);
+            } else if (ms[0].equals("+86")) {
+                return sendAliyunCode(ms[1], code);
+            } else {
+               return sendAwsCode(mobile, code);
+            }
         } else {
             return RestResult.RestCode.ERROR_SERVER_NOT_IMPLEMENT;
         }
@@ -77,7 +94,7 @@ public class SmsServiceImpl implements SmsService {
     static OkHttpClient okHttpClient = new OkHttpClient();
 
     private RestResult.RestCode sendAliyunCode(String mobile, String code) {
-
+        System.out.println("send  mobile:"+ mobile);
         String content = String.format("【冉静网络】您的验证码是：%s。", code);
 
         FormBody formBody = new FormBody
@@ -97,6 +114,44 @@ public class SmsServiceImpl implements SmsService {
         } catch (Exception e) {
             return RestResult.RestCode.ERROR_SERVER_ERROR;
         }
+    }
+
+    private RestResult.RestCode sendAwsCode(String phoneNumber, String code) {
+        System.out.println("send aws mobile:"+ phoneNumber);
+        try {
+            AWSCredentials awsCredentials = new AWSCredentials() {
+                @Override
+                public String getAWSAccessKeyId() {
+                    return "AKIAUNZD3EQBV5H5UC64";
+                }
+
+                @Override
+                public String getAWSSecretKey() {
+                    return "dDUv67fj6KsJrjJkQwa+4mkABt0bXg2tFVbtBJHx";
+                }
+            };
+
+            AmazonSNSClient snsClient = (AmazonSNSClient) AmazonSNSClientBuilder.standard().withRegion("ap-northeast-1").withCredentials(new AWSStaticCredentialsProvider(awsCredentials)).build();
+            String message = "Your SMS verification code is: " + code;
+            Map<String, MessageAttributeValue> smsAttributes =
+                    new HashMap<>();
+            //<set SMS attributes>
+            sendSMSMessage(snsClient, message, phoneNumber, smsAttributes);
+            return RestResult.RestCode.SUCCESS;
+        } catch (Exception e) {
+            return RestResult.RestCode.ERROR_SERVER_ERROR;
+        }
+
+    }
+
+
+    public static void sendSMSMessage(AmazonSNSClient snsClient, String message,
+                                      String phoneNumber, Map<String, MessageAttributeValue> smsAttributes) {
+        PublishResult result = snsClient.publish(new PublishRequest()
+                .withMessage(message)
+                .withPhoneNumber(phoneNumber)
+                .withMessageAttributes(smsAttributes));
+        System.out.println("send: aws sms ：" + result); // Prints the message ID.
     }
 
 }
