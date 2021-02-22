@@ -54,10 +54,10 @@ public class AuthDataSource {
 
 
     public RestResult.RestCode insertRecord(String mobile, String code) {
-        if (!Utils.isMobile(mobile)) {
-            LOG.error("Not valid mobile {}", mobile);
-            return RestResult.RestCode.ERROR_INVALID_MOBILE;
-        }
+//        if (!Utils.isMobile(mobile)) {
+//            LOG.error("Not valid mobile {}", mobile);
+//            return RestResult.RestCode.ERROR_INVALID_MOBILE;
+//        }
 
         Record record = mRecords.get(mobile);
         if (record != null && System.currentTimeMillis() - record.getTimestamp() < 60 * 1000) {
