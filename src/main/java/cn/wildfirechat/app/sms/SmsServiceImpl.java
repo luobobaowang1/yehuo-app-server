@@ -73,6 +73,7 @@ public class SmsServiceImpl implements SmsService {
 
     private RestResult.RestCode sendTencentCode(String mobile, String code) {
         try {
+            System.out.println("send  mobile:"+ mobile+"code:"+code);
             String[] params = {code};
             SmsSingleSender ssender = new SmsSingleSender(mTencentSMSConfig.appid, mTencentSMSConfig.appkey);
             SmsSingleSenderResult result = ssender.sendWithParam("86", mobile,
@@ -94,7 +95,6 @@ public class SmsServiceImpl implements SmsService {
     static OkHttpClient okHttpClient = new OkHttpClient();
 
     private RestResult.RestCode sendAliyunCode(String mobile, String code) {
-        System.out.println("send  mobile:"+ mobile);
         String content = String.format("【冉静网络】您的验证码是：%s。", code);
 
         FormBody formBody = new FormBody
