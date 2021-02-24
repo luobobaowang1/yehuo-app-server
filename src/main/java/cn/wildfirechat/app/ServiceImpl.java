@@ -216,6 +216,7 @@ public class ServiceImpl implements Service {
 
     @Override
     public RestResult login(String mobile, String code, String clientId, int platform) {
+        System.out.println("login mobile:"+ mobile +"code:" +code);
         Subject subject = SecurityUtils.getSubject();
         // 在认证提交前准备 token（令牌）
         UsernamePasswordToken token = new UsernamePasswordToken(mobile, code);
