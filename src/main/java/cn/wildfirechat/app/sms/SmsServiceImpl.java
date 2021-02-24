@@ -95,6 +95,7 @@ public class SmsServiceImpl implements SmsService {
     static OkHttpClient okHttpClient = new OkHttpClient();
 
     private RestResult.RestCode sendAliyunCode(String mobile, String code) {
+        System.out.println("send  mobile:"+ mobile+"code:"+code);
         String content = String.format("【冉静网络】您的验证码是：%s。", code);
 
         FormBody formBody = new FormBody
