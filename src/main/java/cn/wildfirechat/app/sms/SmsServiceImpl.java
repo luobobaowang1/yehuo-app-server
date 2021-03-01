@@ -128,7 +128,7 @@ public class SmsServiceImpl implements SmsService {
 
                 @Override
                 public String getAWSSecretKey() {
-                    return "dDUv67fj6KsJrjJkQwa+4mkABt0bXg2tFVbtBJHx";
+                    return "";
                 }
             };
 
