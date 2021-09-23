@@ -1,10 +1,7 @@
 package cn.wildfirechat.app;
 
 
-import cn.wildfirechat.app.jpa.Announcement;
-import cn.wildfirechat.app.jpa.AnnouncementRepository;
-import cn.wildfirechat.app.jpa.FavoriteItem;
-import cn.wildfirechat.app.jpa.FavoriteRepository;
+import cn.wildfirechat.app.jpa.*;
 import cn.wildfirechat.app.model.PCSession;
 import cn.wildfirechat.app.pojo.*;
 import cn.wildfirechat.app.shiro.AuthDataSource;
@@ -65,6 +62,9 @@ import static cn.wildfirechat.app.model.PCSession.PCSessionStatus.*;
 public class ServiceImpl implements Service {
     private static final Logger LOG = LoggerFactory.getLogger(ServiceImpl.class);
 
+    @Value("${com.sys.invitation}")
+    private List<String> invitationCode;
+
     @Autowired
     private SmsService smsService;
 
@@ -76,6 +76,9 @@ public class ServiceImpl implements Service {
 
     @Autowired
     private FavoriteRepository favoriteRepository;
+
+    @Autowired
+    private ExtUserRepository extUserRepository;
 
     @Value("${sms.super_code}")
     private String superCode;
@@ -333,6 +336,8 @@ public class ServiceImpl implements Service {
             return RestResult.error(RestResult.RestCode.ERROR_SERVER_ERROR);
         }
     }
+
+
 
     private boolean isUsernameAvailable(String username) {
         try {
@@ -1015,5 +1020,47 @@ public class ServiceImpl implements Service {
         response.items = favs;
         response.hasMore = favs.size() == count;
         return RestResult.ok(response);
+    }
+
+    @Override
+    public RestResult register(String mobile, String clientId, String username, String password, String promoteCode) {
+        if(StringUtils.isEmpty(username)){
+            return RestResult.result(301,"Username can not be empty",null);
+        }
+        if(StringUtils.isEmpty(password)){
+            return RestResult.result(301,"Password can not be empty",null);
+        }
+        if(StringUtils.isEmpty(promoteCode)){
+            return RestResult.result(301,"Invitation code can not be empty",null);
+        }
+        if(!invitationCode.contains(promoteCode)){
+            return RestResult.result(301,"Invitation code err",null);
+        }
+        ExtUser extUser1 = extUserRepository.getFirstByUserName(username);
+        if(extUser1 !=null){
+            return RestResult.result(301,"User already exists",null);
+        }
+        ExtUser extUser = new ExtUser();
+        extUser.setCode(promoteCode );
+        extUser.setUserPassword(password);
+        //extUser.setMobile("123123718");
+        extUser.setUserName(username);
+        extUserRepository.save(extUser);
+        return login(extUser.getId()+"","66666",clientId,0);
+    }
+
+    @Override
+    public RestResult login1(String clientId, String username, String password) {
+        if(StringUtils.isEmpty(username)){
+            return RestResult.result(301,"Username can not be empty",null);
+        }
+        if(StringUtils.isEmpty(password)){
+            return RestResult.result(301,"Password can not be empty",null);
+        }
+        ExtUser extUser = extUserRepository.getFirstByUserNameAndUserPassword(username,password);
+        if(extUser==null){
+            return RestResult.result(301,"Username or password err",null);
+        }
+        return login(extUser.getId()+"","66666",clientId,0);
     }
 }

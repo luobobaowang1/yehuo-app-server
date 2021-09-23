@@ -5,6 +5,9 @@ public class LoginRequest {
     private String code;
     private String clientId;
     private Integer platform;
+    private String promoteCode;
+    private String userName;
+    private String password;
 
     public String getClientId() {
         return clientId;
@@ -36,5 +39,29 @@ public class LoginRequest {
 
     public void setCode(String code) {
         this.code = code;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPromoteCode(String promoteCode) {
+        this.promoteCode = promoteCode;
+    }
+
+    public String getPromoteCode() {
+        return promoteCode;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getUserName() {
+        return userName;
     }
 }

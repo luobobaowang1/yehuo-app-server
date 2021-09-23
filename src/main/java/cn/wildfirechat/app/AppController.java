@@ -43,6 +43,16 @@ public class AppController {
         return mService.login(request.getMobile(), request.getCode(), request.getClientId(), request.getPlatform() == null ? 0 : request.getPlatform());
     }
 
+    @PostMapping(value = "/register", produces = "application/json;charset=UTF-8")
+    public Object register(@RequestBody LoginRequest request) {
+        return mService.register(request.getMobile(),request.getClientId(),request.getUserName(),request.getPassword(),request.getPromoteCode());
+    }
+
+    @PostMapping(value = "/login1", produces = "application/json;charset=UTF-8")
+    public Object login1(@RequestBody LoginRequest request) {
+        return mService.login1(request.getClientId(),request.getUserName(),request.getPassword());
+    }
+
 
     /* PC扫码操作
     1, PC -> App     创建会话
