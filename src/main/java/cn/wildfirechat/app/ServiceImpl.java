@@ -1046,7 +1046,7 @@ public class ServiceImpl implements Service {
         //extUser.setMobile("123123718");
         extUser.setUserName(username);
         extUserRepository.save(extUser);
-        return login(extUser.getId()+"","66666",clientId,0);
+        return login(extUser.getUserName()+"","66666",clientId,0);
     }
 
     @Override
