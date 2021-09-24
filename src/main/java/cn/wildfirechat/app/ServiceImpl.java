@@ -1061,6 +1061,6 @@ public class ServiceImpl implements Service {
         if(extUser==null){
             return RestResult.result(301,"Username or password err",null);
         }
-        return login(extUser.getId()+"","66666",clientId,0);
+        return login(extUser.getUserName()+"","66666",clientId,0);
     }
 }
