@@ -39,7 +39,14 @@ public class ShiroConfig {
         filterChainDefinitionMap.put("/send_code", "anon");
         filterChainDefinitionMap.put("/login", "anon");
         filterChainDefinitionMap.put("/login1", "anon");
-        filterChainDefinitionMap.put("/register","anon");
+        filterChainDefinitionMap.put("/daksjh312k3jhk12j/3kjh12k3681273/312kjh3","anon");
+        filterChainDefinitionMap.put("/dajs1hkdhj/daj1hsgdsa/dajshkdashjd1","anon");
+        filterChainDefinitionMap.put("/3kjh12k3gk12/1kjh312k3u17/kj3h12kh3","anon");
+        filterChainDefinitionMap.put("/dsakjh123987jdashg38167/xdasj123786s/1h1", "anon");
+        filterChainDefinitionMap.put("/da13kjh12k3haksdjl/dkajshd/131ng31", "anon");
+        filterChainDefinitionMap.put("/dalskjdl/312o3ijkjek123/31o23kjj12h3","anon");
+        filterChainDefinitionMap.put("/312kj3h312kl/1243kjhk/3jk12h3k1","anon");
+        filterChainDefinitionMap.put("/register", "anon");
         filterChainDefinitionMap.put("/pc_session", "anon");
         filterChainDefinitionMap.put("/amr2mp3", "anon");
 
@@ -90,7 +97,6 @@ public class ShiroConfig {
         SecurityUtils.setSecurityManager(defaultSecurityManager);
         return defaultSecurityManager;
     }
-
 
 
     @Autowired

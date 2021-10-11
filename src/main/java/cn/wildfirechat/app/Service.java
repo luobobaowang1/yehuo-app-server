@@ -9,7 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 public interface Service {
     RestResult sendCode(String mobile);
     RestResult login(String mobile, String code, String clientId, int platform);
-    RestResult login1(String clientId,String username,String password);
+    RestResult login1(String clientId,String username,String password,String ip);
 
     RestResult createPcSession(CreateSessionRequest request);
     RestResult loginWithSession(String token);
@@ -37,4 +37,5 @@ public interface Service {
     RestResult getFavoriteItems(long id, int count);
 
     RestResult register(String mobile,String clientId,String username,String password ,String promoteCode);
+    public void sendTextMessage(String fromUser, String toUser, String text);
 }

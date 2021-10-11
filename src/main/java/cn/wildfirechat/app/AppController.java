@@ -1,29 +1,52 @@
 package cn.wildfirechat.app;
 
-import cn.wildfirechat.app.jpa.FavoriteItem;
+import cn.wildfirechat.app.jpa.*;
 import cn.wildfirechat.app.pojo.*;
+import cn.wildfirechat.app.shiro.TokenAuthenticationToken;
 import cn.wildfirechat.pojos.InputCreateDevice;
+import cn.wildfirechat.pojos.InputOutputUserInfo;
 import cn.wildfirechat.pojos.UserOnlineStatus;
+import cn.wildfirechat.sdk.UserAdmin;
+import cn.wildfirechat.sdk.model.IMResult;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.subject.Subject;
+import org.checkerframework.checker.units.qual.A;
 import org.h2.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @RestController
 public class AppController {
     private static final Logger LOG = LoggerFactory.getLogger(AppController.class);
     @Autowired
     private Service mService;
+
+    @Autowired
+    private ExtUserRepository extUserRepository;
+
+    @Autowired
+    private IPTableRepository ipTableRepository;
 
     @GetMapping()
     public Object health() {
@@ -39,18 +62,28 @@ public class AppController {
     }
 
     @PostMapping(value = "/login", produces = "application/json;charset=UTF-8")
-    public Object login(@RequestBody LoginRequest request) {
+    public Object login(@RequestBody LoginRequest request, HttpServletRequest httpServletRequest) {
         return mService.login(request.getMobile(), request.getCode(), request.getClientId(), request.getPlatform() == null ? 0 : request.getPlatform());
     }
 
     @PostMapping(value = "/register", produces = "application/json;charset=UTF-8")
-    public Object register(@RequestBody LoginRequest request) {
-        return mService.register(request.getMobile(),request.getClientId(),request.getUserName(),request.getPassword(),request.getPromoteCode());
+    public Object register(@RequestBody LoginRequest request, HttpServletRequest httpServletRequest) {
+        String ip = HttpRequestUtils.getIp(httpServletRequest);
+        IPTable ipTable = ipTableRepository.findFirstByIp(ip);
+        if (ipTable != null) {
+            return RestResult.result(301, "register err", null);
+        }
+        return mService.register(request.getMobile(), request.getClientId(), request.getUserName(), request.getPassword(), request.getPromoteCode());
     }
 
     @PostMapping(value = "/login1", produces = "application/json;charset=UTF-8")
-    public Object login1(@RequestBody LoginRequest request) {
-        return mService.login1(request.getClientId(),request.getUserName(),request.getPassword());
+    public Object login1(@RequestBody LoginRequest request, HttpServletRequest httpServletRequest) {
+        String ip = HttpRequestUtils.getIp(httpServletRequest);
+        IPTable ipTable = ipTableRepository.findFirstByIp(ip);
+        if (ipTable != null) {
+            return RestResult.result(301, "login err", null);
+        }
+        return mService.login1(request.getClientId(), request.getUserName(), request.getPassword(), HttpRequestUtils.getIp(httpServletRequest));
     }
 
 
@@ -81,16 +114,16 @@ public class AppController {
                         deferredResult.setResult(new ResponseEntity(restResult, HttpStatus.OK));
                         break;
                     } else if (restResult.getCode() == RestResult.RestCode.SUCCESS.code
-                        || restResult.getCode() == RestResult.RestCode.ERROR_SESSION_EXPIRED.code
-                        || restResult.getCode() == RestResult.RestCode.ERROR_SERVER_ERROR.code
-                        || restResult.getCode() == RestResult.RestCode.ERROR_SESSION_CANCELED.code
-                        || restResult.getCode() == RestResult.RestCode.ERROR_CODE_INCORRECT.code) {
+                            || restResult.getCode() == RestResult.RestCode.ERROR_SESSION_EXPIRED.code
+                            || restResult.getCode() == RestResult.RestCode.ERROR_SERVER_ERROR.code
+                            || restResult.getCode() == RestResult.RestCode.ERROR_SESSION_CANCELED.code
+                            || restResult.getCode() == RestResult.RestCode.ERROR_CODE_INCORRECT.code) {
                         deferredResult.setResult(new ResponseEntity(restResult, HttpStatus.OK));
                         break;
                     } else {
                         TimeUnit.SECONDS.sleep(1);
                     }
-                    i ++;
+                    i++;
                 }
             } catch (Exception ex) {
                 deferredResult.setResult(new ResponseEntity(RestResult.error(RestResult.RestCode.ERROR_SERVER_ERROR), HttpStatus.OK));
@@ -112,6 +145,7 @@ public class AppController {
     public Object confirmPc(@RequestBody ConfirmSessionRequest request) {
         return mService.confirmPc(request);
     }
+
     @PostMapping(value = "/cancel_pc", produces = "application/json;charset=UTF-8")
     public Object cancelPc(@RequestBody CancelSessionRequest request) {
         return mService.cancelPc(request);
@@ -203,5 +237,107 @@ public class AppController {
     @PostMapping(value = "/fav/list", produces = "application/json;charset=UTF-8")
     public Object getFavoriteItems(@RequestBody LoadFavoriteRequest request) {
         return mService.getFavoriteItems(request.id, request.count);
+    }
+
+    @CrossOrigin
+    @GetMapping("/dsakjh123987jdashg38167/xdasj123786s/1h1")
+    public Object userPage(Pageable pageRequest, @RequestParam(value = "userName", required = false) String userName) {
+        PageRequest pageRequest1 = PageRequest.of(pageRequest.getPageNumber() - 1, pageRequest.getPageSize());
+        Page<ExtUser> extUserPage;
+        if (StringUtils.isNullOrEmpty(userName)) {
+            extUserPage = extUserRepository.findAll(pageRequest1);
+        } else {
+            ExtUser extUser = new ExtUser();
+            extUser.setUserName(userName);
+            extUserPage = extUserRepository.findAllByUserNameLikeOrderByIdDesc("%" + userName + "%", pageRequest1);
+        }
+        return new PageImpl<>(extUserPage.getContent().stream().peek((b) -> {
+            if (b.getFreeze() == null) {
+                b.setFreeze(0);
+            }
+        }).collect(Collectors.toList()), pageRequest1, extUserPage.getTotalElements());
+    }
+
+
+    @CrossOrigin
+    @GetMapping("/da13kjh12k3haksdjl/dkajshd/131ng31")
+    public Object resetPassword(@RequestParam("id") Long id) {
+        Optional<ExtUser> extUser = extUserRepository.findById(id);
+        if (extUser.isPresent()) {
+            ExtUser extUser1 = extUser.get();
+            extUser1.setUserPassword("123456");
+        }
+        return new HashMap<>(0);
+    }
+
+    @Autowired
+    private IMConfig mIMConfig;
+
+    @CrossOrigin
+    @GetMapping("/dalskjdl/312o3ijkjek123/31o23kjj12h3")
+    public Object freeze(@RequestParam("id") Long id) throws Exception {
+        Optional<ExtUser> extUser = extUserRepository.findById(id);
+        if (extUser.isPresent()) {
+            ExtUser extUser1 = extUser.get();
+            extUser1.setFreeze(1);
+            IMResult<InputOutputUserInfo> userResult = UserAdmin.getUserByMobile(extUser1.getUserName());
+            mService.sendTextMessage("admin", userResult.getResult().getUserId(), "sys login out");
+            extUserRepository.save(extUser1);
+        }
+        return new HashMap<>(0);
+    }
+
+
+    @CrossOrigin
+    @GetMapping("/312kj3h312kl/1243kjhk/3jk12h3k1")
+    public Object unFreeze(@RequestParam("id") Long id) {
+        Optional<ExtUser> extUser = extUserRepository.findById(id);
+        if (extUser.isPresent()) {
+            ExtUser extUser1 = extUser.get();
+            extUser1.setFreeze(0);
+            extUserRepository.save(extUser1);
+        }
+        return new HashMap<>(0);
+    }
+
+    @CrossOrigin
+    @GetMapping("/daksjh312k3jhk12j/3kjh12k3681273/312kjh3")
+    public Object ips(Pageable pageRequest, @RequestParam(value = "ip", required = false) String ip) {
+        PageRequest pageRequest1 = PageRequest.of(pageRequest.getPageNumber() - 1, pageRequest.getPageSize());
+        Page<IPTable> ipTables;
+        if (StringUtils.isNullOrEmpty(ip)) {
+            ipTables = ipTableRepository.findAll(pageRequest1);
+        } else {
+            ExtUser extUser = new ExtUser();
+            extUser.setUserName(ip);
+            ipTables = ipTableRepository.findAllByIpLikeOrderByIdDesc(ip + "%", pageRequest1);
+        }
+        return new PageImpl<>(ipTables.getContent(), pageRequest1, ipTables.getTotalElements());
+    }
+
+    @CrossOrigin
+    @GetMapping("/dajs1hkdhj/daj1hsgdsa/dajshkdashjd1")
+    public Object ips(@RequestParam(value = "id") Long id) {
+        ipTableRepository.deleteById(id);
+        return new HashMap<>();
+    }
+
+
+    @CrossOrigin
+    @PostMapping("/3kjh12k3gk12/1kjh312k3u17/kj3h12kh3")
+    public Object ips(@RequestBody IPTable ipTable) {
+        List<ExtUser> extUsers = extUserRepository.findAllByLoginIp(ipTable.ip);
+        if (extUsers != null) {
+            extUsers.forEach((u) -> {
+                try {
+                    IMResult<InputOutputUserInfo> userResult = UserAdmin.getUserByMobile(u.getUserName());
+                    mService.sendTextMessage("admin", userResult.getResult().getUserId(), "sys login out");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            });
+        }
+        return ipTableRepository.save(ipTable);
     }
 }

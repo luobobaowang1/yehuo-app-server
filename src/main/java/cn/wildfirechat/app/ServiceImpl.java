@@ -219,7 +219,7 @@ public class ServiceImpl implements Service {
 
     @Override
     public RestResult login(String mobile, String code, String clientId, int platform) {
-        System.out.println("login mobile:"+ mobile +"code:" +code);
+        System.out.println("login mobile:" + mobile + "code:" + code);
         Subject subject = SecurityUtils.getSubject();
         // 在认证提交前准备 token（令牌）
         UsernamePasswordToken token = new UsernamePasswordToken(mobile, code);
@@ -338,7 +338,6 @@ public class ServiceImpl implements Service {
     }
 
 
-
     private boolean isUsernameAvailable(String username) {
         try {
             IMResult<InputOutputUserInfo> existUser = UserAdmin.getUserByName(username);
@@ -390,7 +389,7 @@ public class ServiceImpl implements Service {
 
     }
 
-    private void sendTextMessage(String fromUser, String toUser, String text) {
+    public void sendTextMessage(String fromUser, String toUser, String text) {
         Conversation conversation = new Conversation();
         conversation.setTarget(toUser);
         conversation.setType(ProtoConstants.ConversationType.ConversationType_Private);
@@ -614,7 +613,7 @@ public class ServiceImpl implements Service {
                     for (PojoGroupMember member : imResult.getResult().getMembers()) {
                         if (member.getMember_id().equals(userId)) {
                             if (member.getType() != ProtoConstants.GroupMemberType.GroupMemberType_Removed
-                                && member.getType() != ProtoConstants.GroupMemberType.GroupMemberType_Silent) {
+                                    && member.getType() != ProtoConstants.GroupMemberType.GroupMemberType_Silent) {
                                 isGroupMember = true;
                             }
                             break;
@@ -928,7 +927,7 @@ public class ServiceImpl implements Service {
         Subject subject = SecurityUtils.getSubject();
         String userId = (String) subject.getSession().getAttribute("userId");
 
-        if(!StringUtils.isEmpty(request.url)){
+        if (!StringUtils.isEmpty(request.url)) {
             try {
                 //收藏时需要把对象拷贝到收藏bucket。
                 URL mediaURL = new URL(request.url);
@@ -1022,45 +1021,62 @@ public class ServiceImpl implements Service {
         return RestResult.ok(response);
     }
 
+
+
+
+
     @Override
     public RestResult register(String mobile, String clientId, String username, String password, String promoteCode) {
-        if(StringUtils.isEmpty(username)){
-            return RestResult.result(301,"Username can not be empty",null);
+        if (StringUtils.isEmpty(username)) {
+            return RestResult.result(301, "Username can not be empty", null);
         }
-        if(StringUtils.isEmpty(password)){
-            return RestResult.result(301,"Password can not be empty",null);
+        if (StringUtils.isEmpty(password)) {
+            return RestResult.result(301, "Password can not be empty", null);
         }
-        if(StringUtils.isEmpty(promoteCode)){
-            return RestResult.result(301,"Invitation code can not be empty",null);
+        if (StringUtils.isEmpty(promoteCode)) {
+            return RestResult.result(301, "Invitation code can not be empty", null);
         }
-        if(!invitationCode.contains(promoteCode)){
-            return RestResult.result(301,"Invitation code err",null);
+        if (!invitationCode.contains(promoteCode)) {
+            return RestResult.result(301, "Invitation code err", null);
         }
         ExtUser extUser1 = extUserRepository.getFirstByUserName(username);
-        if(extUser1 !=null){
-            return RestResult.result(301,"User already exists",null);
+        if (extUser1 != null) {
+            return RestResult.result(301, "User already exists", null);
         }
         ExtUser extUser = new ExtUser();
-        extUser.setCode(promoteCode );
+        extUser.setCode(promoteCode);
         extUser.setUserPassword(password);
         //extUser.setMobile("123123718");
         extUser.setUserName(username);
+        RestResult restResult= login(extUser.getUserName() + "", "66666", clientId, 0);
+        LoginResponse loginResponse = (LoginResponse) restResult.getResult();
+        extUser.setToken(loginResponse.getToken());
         extUserRepository.save(extUser);
-        return login(extUser.getUserName()+"","66666",clientId,0);
+        return restResult;
     }
 
     @Override
-    public RestResult login1(String clientId, String username, String password) {
-        if(StringUtils.isEmpty(username)){
-            return RestResult.result(301,"Username can not be empty",null);
+    public RestResult login1(String clientId, String username, String password, String ip) {
+        if (StringUtils.isEmpty(username)) {
+            return RestResult.result(301, "Username can not be empty", null);
         }
-        if(StringUtils.isEmpty(password)){
-            return RestResult.result(301,"Password can not be empty",null);
+        if (StringUtils.isEmpty(password)) {
+            return RestResult.result(301, "Password can not be empty", null);
         }
-        ExtUser extUser = extUserRepository.getFirstByUserNameAndUserPassword(username,password);
-        if(extUser==null){
-            return RestResult.result(301,"Username or password err",null);
+        ExtUser extUser = extUserRepository.getFirstByUserNameAndUserPassword(username, password);
+        if (extUser == null) {
+            return RestResult.result(301, "Username or password err", null);
         }
-        return login(extUser.getUserName()+"","66666",clientId,0);
+       if (Integer.valueOf(1).equals(extUser.getFreeze())) {
+            return RestResult.result(301, "login err", null);
+        }
+        if (!"-1".equals(ip)) {
+            extUser.setLoginIp(ip);
+        }
+        RestResult  restResult =login(extUser.getUserName() + "", "66666", clientId, 0);
+        LoginResponse loginResponse = (LoginResponse) restResult.getResult();
+        extUser.setToken(loginResponse.getToken());
+        extUserRepository.save(extUser);
+        return restResult;
     }
 }

@@ -24,4 +24,13 @@ public class ExtUser {
     public String mobile;
 
     public String code;//邀请码
+
+
+    public Integer freeze;
+
+
+    public String token;
+
+    @Column(name = "login_ip")
+    public String loginIp;
 }
