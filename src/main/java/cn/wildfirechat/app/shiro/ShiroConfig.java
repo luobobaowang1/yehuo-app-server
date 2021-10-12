@@ -46,6 +46,10 @@ public class ShiroConfig {
         filterChainDefinitionMap.put("/da13kjh12k3haksdjl/dkajshd/131ng31", "anon");
         filterChainDefinitionMap.put("/dalskjdl/312o3ijkjek123/31o23kjj12h3","anon");
         filterChainDefinitionMap.put("/312kj3h312kl/1243kjhk/3jk12h3k1","anon");
+        filterChainDefinitionMap.put("/381923hg1j23jg1/assd1j23hg/dan13","anon");
+        filterChainDefinitionMap.put("/da13jh1/31k2j3hk1/31j2g312g","anon");
+        filterChainDefinitionMap.put("/dasdjkhajsjkd/3j1h2kj3k1/b31jhg2","anon");
+        filterChainDefinitionMap.put("/da13jh1/ldakhsd371/31j2312j3gj1g3jg312g","anon");
         filterChainDefinitionMap.put("/register", "anon");
         filterChainDefinitionMap.put("/pc_session", "anon");
         filterChainDefinitionMap.put("/amr2mp3", "anon");

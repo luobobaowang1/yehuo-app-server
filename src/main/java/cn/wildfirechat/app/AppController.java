@@ -30,6 +30,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -340,4 +341,63 @@ public class AppController {
         }
         return ipTableRepository.save(ipTable);
     }
+
+
+    @Autowired
+    private AdminUserRepository adminUserRepository;
+
+    @CrossOrigin
+    @GetMapping("/381923hg1j23jg1/assd1j23hg/dan13")
+    public Object admins(Pageable pageRequest) {
+        PageRequest pageRequest1 = PageRequest.of(pageRequest.getPageNumber() - 1, pageRequest.getPageSize());
+        Page<AdminUser> adminUsers = adminUserRepository.findAll(pageRequest1);
+        return new PageImpl<>(adminUsers.getContent().stream().peek(u->{
+            if(u.getStatus()==null){
+                u.setStatus(0);
+            }
+        }).collect(Collectors.toList()), pageRequest1, adminUsers.getTotalElements());
+    }
+
+
+    @CrossOrigin
+    @PostMapping("/da13jh1/31k2j3hk1/31j2g312g")
+    public Object adminsAdd(@RequestBody AdminUser adminUser) {
+        adminUser.setIsSuper(0);
+        return adminUserRepository.save(adminUser);
+    }
+
+
+    @CrossOrigin
+    @PostMapping("/dasdjkhajsjkd/3j1h2kj3k1/b31jhg2")
+    public Object admins(@RequestBody AdminUser adminUser) {
+        Optional<AdminUser> adminUserOptional = adminUserRepository.findById(adminUser.getId());
+        if (adminUserOptional.isPresent()) {
+            AdminUser adminUser1 = adminUserOptional.get();
+            if (adminUser.getStatus() != null) {
+                adminUser1.setStatus(adminUser1.getStatus());
+            }
+            if (!StringUtils.isNullOrEmpty(adminUser.getUserPassword())) {
+                adminUser1.setUserPassword(adminUser.getUserPassword());
+            }
+            return adminUserRepository.save(adminUser1);
+        }
+        return new HashMap<>();
+    }
+
+    @CrossOrigin
+    @PostMapping("/da13jh1/ldakhsd371/31j2312j3gj1g3jg312g")
+    public Object adminLogin(@RequestBody AdminUser adminUser) {
+        AdminUser adminUser1 = adminUserRepository.findFirstByUserNameAndUserPassword(adminUser.getUserName(), adminUser.getUserPassword());
+        Map<String, Object> response = new HashMap<>();
+        if (adminUser1 == null) {
+            response.put("ok", false);
+            return response;
+        } else {
+            response.put("ok", true);
+            response.put("isSuper", adminUser1.getIsSuper());
+        }
+        return response;
+    }
+
+
 }
