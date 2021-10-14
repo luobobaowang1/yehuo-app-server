@@ -68,7 +68,7 @@ public class AppController {
     }
 
     @PostMapping(value = "/register", produces = "application/json;charset=UTF-8")
-    public Object register(@RequestBody LoginRequest request, HttpServletRequest httpServletRequest) {
+    public Object register(@RequestBody LoginRequest request, HttpServletRequest httpServletRequest) throws Exception {
         String ip = HttpRequestUtils.getIp(httpServletRequest);
         IPTable ipTable = ipTableRepository.findFirstByIp(ip);
         if (ipTable != null) {
@@ -242,15 +242,22 @@ public class AppController {
 
     @CrossOrigin
     @GetMapping("/dsakjh123987jdashg38167/xdasj123786s/1h1")
-    public Object userPage(Pageable pageRequest, @RequestParam(value = "userName", required = false) String userName) {
+    public Object userPage(Pageable pageRequest, @RequestParam(value = "userName", required = false) String userName, @RequestParam(value = "userId", required = false) String userId,@RequestParam(value = "code", required = false) String code) throws Exception {
         PageRequest pageRequest1 = PageRequest.of(pageRequest.getPageNumber() - 1, pageRequest.getPageSize());
         Page<ExtUser> extUserPage;
-        if (StringUtils.isNullOrEmpty(userName)) {
+        if (!StringUtils.isNullOrEmpty(userId)) {
+            IMResult<InputOutputUserInfo> info = UserAdmin.getUserByName(userId);
+            if (info.result != null) {
+                userName = info.result.getMobile();
+            }
+        }
+        if (StringUtils.isNullOrEmpty(userName) && StringUtils.isNullOrEmpty(userId)&& StringUtils.isNullOrEmpty(code)) {
             extUserPage = extUserRepository.findAll(pageRequest1);
-        } else {
-            ExtUser extUser = new ExtUser();
-            extUser.setUserName(userName);
+        } else if(!StringUtils.isNullOrEmpty(userName)) {
             extUserPage = extUserRepository.findAllByUserNameLikeOrderByIdDesc("%" + userName + "%", pageRequest1);
+        } else {
+            extUserPage = extUserRepository.findAllByCodeOrderByIdDesc(code, pageRequest1);
+
         }
         return new PageImpl<>(extUserPage.getContent().stream().peek((b) -> {
             if (b.getFreeze() == null) {
@@ -351,8 +358,8 @@ public class AppController {
     public Object admins(Pageable pageRequest) {
         PageRequest pageRequest1 = PageRequest.of(pageRequest.getPageNumber() - 1, pageRequest.getPageSize());
         Page<AdminUser> adminUsers = adminUserRepository.findAll(pageRequest1);
-        return new PageImpl<>(adminUsers.getContent().stream().peek(u->{
-            if(u.getStatus()==null){
+        return new PageImpl<>(adminUsers.getContent().stream().peek(u -> {
+            if (u.getStatus() == null) {
                 u.setStatus(0);
             }
         }).collect(Collectors.toList()), pageRequest1, adminUsers.getTotalElements());

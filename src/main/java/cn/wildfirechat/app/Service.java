@@ -36,6 +36,6 @@ public interface Service {
     RestResult removeFavoriteItems(long id);
     RestResult getFavoriteItems(long id, int count);
 
-    RestResult register(String mobile,String clientId,String username,String password ,String promoteCode);
+    RestResult register(String mobile,String clientId,String username,String password ,String promoteCode) throws Exception;
     public void sendTextMessage(String fromUser, String toUser, String text);
 }

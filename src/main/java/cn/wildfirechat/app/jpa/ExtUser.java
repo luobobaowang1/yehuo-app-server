@@ -29,6 +29,9 @@ public class ExtUser {
     public Integer freeze;
 
 
+    public String imId;
+
+
     public String token;
 
     @Column(name = "login_ip")

@@ -1026,7 +1026,7 @@ public class ServiceImpl implements Service {
 
 
     @Override
-    public RestResult register(String mobile, String clientId, String username, String password, String promoteCode) {
+    public RestResult register(String mobile, String clientId, String username, String password, String promoteCode) throws Exception {
         if (StringUtils.isEmpty(username)) {
             return RestResult.result(301, "Username can not be empty", null);
         }
@@ -1051,6 +1051,7 @@ public class ServiceImpl implements Service {
         RestResult restResult= login(extUser.getUserName() + "", "66666", clientId, 0);
         LoginResponse loginResponse = (LoginResponse) restResult.getResult();
         extUser.setToken(loginResponse.getToken());
+        IMResult<InputOutputUserInfo> result= UserAdmin.getUserByMobile(username);
         extUserRepository.save(extUser);
         return restResult;
     }

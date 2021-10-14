@@ -20,4 +20,9 @@ public interface ExtUserRepository extends JpaRepository<ExtUser, Long> {
 
 
     Page<ExtUser> findAllByUserNameLikeOrderByIdDesc(String userName, Pageable pageRequest);
+
+
+
+
+    Page<ExtUser> findAllByCodeOrderByIdDesc(String userName, Pageable pageRequest);
 }
