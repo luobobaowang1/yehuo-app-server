@@ -274,6 +274,7 @@ public class AppController {
         if (extUser.isPresent()) {
             ExtUser extUser1 = extUser.get();
             extUser1.setUserPassword("123456");
+            extUserRepository.save(extUser1);
         }
         return new HashMap<>(0);
     }
